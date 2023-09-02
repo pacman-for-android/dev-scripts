@@ -51,20 +51,21 @@ test $device_count -ne 1 && fail "$device_count devices connected! Expected 1 ex
 #
 # Push files to remote
 #
-
-msg "Pushing files to remote"
-adb push --sync "$pkgbuild_dir" "$remote_dir"
+if [[ -z $NOPUSH ]]; then
+    msg "Pushing files to remote"
+    adb push --sync "$pkgbuild_dir" "$remote_dir"
+else
+    warning "Skipping push"
+fi
 
 
 #
 # Clean remote
 #
 
-msg "Cleaning remote built packages"
-adb shell rm -rf "$remote_pkgbuild_dir/*.pkg.tar.{gz,xz,zst}"
-
-
 if [[ -z $NOCLEAN ]]; then
+    msg "Cleaning remote built packages"
+    adb shell rm -rf "$remote_pkgbuild_dir/*.pkg.tar.{gz,xz,zst}"
     msg "Cleaning remote srcdir and pkgdir"
     adb shell rm -rf "$remote_pkgbuild_dir/{src,pkg}"
 else
@@ -74,9 +75,12 @@ fi
 #
 # Build package
 #
-
-msg "Building package"
-adb shell -tt /data/usr/bin/bash "-ic" "\". /data/home/shell/.bashrc && cd $remote_pkgbuild_dir && makepkg -L --skippgpcheck --nocheck -d $MAKEPKG_FLAGS\""
+if [[ -z $NOBUILD ]]; then
+    msg "Building package"
+    adb shell -tt /data/usr/bin/bash "-ic" "\". /data/home/shell/.bashrc && cd $remote_pkgbuild_dir && makepkg -L --skippgpcheck --nocheck -d $MAKEPKG_FLAGS\""
+else
+    warning "Skip build"
+fi
 
 #
 # Pull packages and logs
@@ -101,7 +105,7 @@ else
         # echo "$built_packages" | xargs -r basename
         echo "$built_packages" | xargs -r -i cp "$pkgbuild_dir/{}" "$target_repo_dir"
         msg "Adding built packages to $move_to_repo repository"
-        echo "$built_packages" | xargs -r -i repo-add -nRp "$target_repo_dir/$move_to_repo.db.tar.gz" "$target_repo_dir/{}"
+        echo "$built_packages" | xargs -r -i repo-add -n -R -p "$target_repo_dir/$move_to_repo.db.tar.gz" "$target_repo_dir/{}"
     else
         warning "Not adding built package to repo"
     fi
