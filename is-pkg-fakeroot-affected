@@ -1,0 +1,31 @@
+#! /bin/bash
+
+set -o pipefail
+
+source /usr/share/makepkg/util/message.sh
+colorize
+
+#
+# Functions
+#
+
+fail() {
+    error "$1" && exit 1
+}
+
+
+#
+# Init & Sanity checks
+#
+
+if [[ $# -ne 1 ]] || ! [[ -f "$1" ]]; then
+    fail "Usage: $0 <path to pkg>"
+fi
+
+
+needle="$(bsdtar tvf "$1" | grep '2000 \+2000' | head)"
+if [[ -z "${needle// /}" ]]; then
+    msg "Package $(basename $1) is not affected."
+else
+    error "Package $(basename $1) is affected."
+fi
