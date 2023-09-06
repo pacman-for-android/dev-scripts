@@ -1,0 +1,57 @@
+set -eo pipefail
+
+source /data/usr/share/makepkg/util/message.sh || source /usr/share/makepkg/util/message.sh
+colorize
+
+#
+# Functions
+#
+
+fail() {
+    error "$1" && exit 1
+}
+
+sudo() {
+    /system/bin/su -p -c $@
+}
+
+#
+# Sanity checks
+#
+
+msg "Checking your envirnment..."
+
+[[ -z "$ANDROID_ROOT" ]] && fail "This script is expected to run on an android device!"
+pacman -Qq install-scripts || fail "You need to install install-scripts from extra repo!"
+if /system/bin/su --help | grep MagiskSU > /dev/null ; then
+    msg "MagiskSU detected!"
+else
+    fail "Only MagiskSU is supported for now!"
+fi
+
+msg "Building chroot..."
+
+mkdir -p workingdir
+sudo chown root:root workingdir
+sudo /bin/chcon u:object_r:system_file:s0 workingdir
+sudo pacstrap -c workingdir base vim
+
+msg "Initializing dirs..."
+
+sudo rm -r workingdir/data/local workingdir/{dev,proc,sys} # Handled by Android
+sudo chmod 0771 workingdir/data
+sudo mkdir -m 700 workingdir/data/home/{shell,root}
+sudo chown root:root workingdir/data/home/root
+sudo chown shell:shell workingdir/data/home/shell
+sudo /bin/chcon u:object_r:system_data_root_file:s0 workingdir/data
+sudo /bin/chcon -R u:object_r:shell_data_file:s0 workingdir/data/home/shell
+
+msg "Creating compressed installation archive..."
+
+sudo env LANG=C bsdtar --xattrs --acls -cjf "installation-archive-$(date --rfc-3339=date).tar.bz2" -C workingdir/data/ .
+
+msg "Removing chroot..."
+
+sudo rm -rf workingdir
+
+msg "Success!"
