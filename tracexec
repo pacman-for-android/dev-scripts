@@ -1,0 +1,1 @@
+strace -Y -f -s99999 -e trace=clone,execve $@
