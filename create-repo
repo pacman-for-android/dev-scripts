@@ -1,0 +1,17 @@
+#!/bin/bash
+
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+fail() {
+    error "$1" && exit 1
+}
+
+if [[ $# -ne 1 ]]; then
+    fail "Usage: $0 <repo-name>"
+fi
+
+if [[ ! -d "$1/.git" ]]; then
+    fail "Not a git repo: $1"
+fi
+
+GH_CONFIG_DIR="$SCRIPT_DIR/../cred" gh repo create "pacman-for-android/$1" -s "$1" --public --push -r mine
