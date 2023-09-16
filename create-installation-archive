@@ -23,10 +23,10 @@ msg "Checking your envirnment..."
 
 [[ -z "$ANDROID_ROOT" ]] && fail "This script is expected to run on an android device!"
 pacman -Qq install-scripts || fail "You need to install install-scripts from extra repo!"
-if /system/bin/su --help | grep MagiskSU > /dev/null ; then
-    msg "MagiskSU detected!"
+if /system/bin/su --help | grep -e "MagiskSU" -e "KernelSU" > /dev/null ; then
+    msg "MagiskSU/KernelSU detected!"
 else
-    fail "Only MagiskSU is supported for now!"
+    fail "Only MagiskSU/KernelSU is supported for now!"
 fi
 
 msg "Building chroot..."
