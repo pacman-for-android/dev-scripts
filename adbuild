@@ -77,7 +77,7 @@ fi
 #
 if [[ -z $NOBUILD ]]; then
     msg "Building package"
-    adb shell -tt /data/usr/bin/bash "-ic" "\". /data/home/shell/.bashrc && cd $remote_pkgbuild_dir && makepkg -L --skippgpcheck --nocheck -d $MAKEPKG_FLAGS\""
+    adb shell -tt /data/usr/bin/bash "-ic" "\". /data/etc/profile && cd $remote_pkgbuild_dir && makepkg -L --skippgpcheck --nocheck -s $MAKEPKG_FLAGS\""
 else
     warning "Skip build"
 fi
@@ -101,9 +101,9 @@ if [[ -z "$built_packages" ]]; then
     error "No packages are built!"
 else
     if [[ -n "$move_to_repo"  ]]; then
-        msg "Copying built packages to repo"
+        msg "Moving built packages to repo"
         # echo "$built_packages" | xargs -r basename
-        echo "$built_packages" | xargs -r -i cp "$pkgbuild_dir/{}" "$target_repo_dir"
+        echo "$built_packages" | xargs -r -i mv "$pkgbuild_dir/{}" "$target_repo_dir"
         msg "Adding built packages to $move_to_repo repository"
         echo "$built_packages" | xargs -r -i repo-add -n -R -p "$target_repo_dir/$move_to_repo.db.tar.gz" "$target_repo_dir/{}"
     else
